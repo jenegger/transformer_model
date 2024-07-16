@@ -8,12 +8,6 @@ import torch.optim as optim
 from data_shaping import create_data
 from transform_model import transformer_model
 from matplotlib import pyplot as plt
-#1) open raw data .txt file
-#2) select 3 events fill them in some kind of vector and reshuffle them
-#the tensor should have columns: E, theta, phi, time, clusternr
-#3) create according to the number of hits a matrix with zeros and ones, zero, if they do not belong to the same cluster, one if yes
-#4) make an upper triangle matrix out of it and write it in plain line to file
-#5) write also the selected hits with E, theta, phi,time into one file
 
 
 class CustomDataset(Dataset):
@@ -56,14 +50,14 @@ def dynamic_length_collate(batch):
 
 
 dataset = CustomDataset()
-dloader = DataLoader(dataset,batch_size=8,shuffle=False,collate_fn=dynamic_length_collate)
+dloader = DataLoader(dataset,batch_size=16,shuffle=False,collate_fn=dynamic_length_collate)
 
 # Train the model
 dtype = torch.float32
 transformer_model = transformer_model(32)
 n_epochs = 50
 total_samples = len(dataset)
-n_iterations = math.ceil(total_samples/8)
+n_iterations = math.ceil(total_samples/16)
 print (total_samples,n_iterations)
 loss_fn = nn.BCELoss()
 optimizer = optim.SGD(transformer_model.parameters(), lr=3e-4)

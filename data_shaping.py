@@ -30,7 +30,7 @@ def create_data():
 	data_list =  []
 	mask_list = []
 	hitnr_list = []
-	#for hits in selected_hits[:1024]:
+	#for hits in selected_hits[:256]:
 	for hits in selected_hits:
 		nr_subevent1 = int(hits[0])
 		nr_subevent2 = int(hits[1])
@@ -38,17 +38,9 @@ def create_data():
 		subevent1 = my_data[my_data[:,0] == nr_subevent1]
 		subevent2 = my_data[my_data[:,0] == nr_subevent2]
 		subevent3 = my_data[my_data[:,0] == nr_subevent3]
-		#print(subevent3)
 		full_event = np.concatenate((subevent1,subevent2,subevent3),axis=0)
-		#print(full_event)
-		#print(type(full_event))
-		##shuffle hits inside event
 		np.random.shuffle(full_event)
-		#print(full_event)
-		#size of an m*m matrix
-		#print(type(full_event))
 		size_corr_matrix = full_event.shape[0]
-		#print(size_corr_matrix)
 		corr_matrix = np.zeros((size_corr_matrix,size_corr_matrix))
 		for i in range(size_corr_matrix):
 			for j in range(size_corr_matrix):
