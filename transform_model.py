@@ -53,11 +53,18 @@ class transformer_model_extended(nn.Module):
 		self.linear_embedding = torch.nn.Linear(4,self.features)
 		self.encoder_layer = nn.TransformerEncoderLayer(d_model=self.features, nhead=self.heads)
 		self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=6)
+		self.activation = torch.nn.ReLU()
+		self.additional_linear_layer = torch.nn.Linear(self.features,self.features)
 		
 
 	def forward(self, x,in_hitnr):
 		x = self.linear_embedding(x)	
+		#x = self.activation(x)  #put in some relu function to test....	
+		#x = self.additional_linear_layer(x) #additional linear layer
 		out = self.transformer_encoder(x)	
+		#out = self.additional_linear_layer(out)
+		#out = self.activation(out)
+		#out = self.additional_linear_layer(out)
 		#use cosine similarity
 		L2_dist = torch.cosine_similarity(out[:,None] , out[:,:,None],dim=-1)		
 		L2_dist = 0.5*(L2_dist+1)

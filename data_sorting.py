@@ -54,34 +54,48 @@ def dynamic_length_collate(batch):
 		
 
 
-
+bs = 64
 dataset = CustomDataset()
-dloader = DataLoader(dataset,batch_size=64,shuffle=False,collate_fn=dynamic_length_collate)
+dloader = DataLoader(dataset,batch_size=bs,shuffle=False,collate_fn=dynamic_length_collate)
+#epoch-iteration infos ----
+n_epochs = 10
+total_samples = len(dataset)
+n_iterations = math.ceil(total_samples/bs)
+print (total_samples,n_iterations)
+#--------------------------
 
 # Train the model
+model = "pytorch_model"  #there are the "homemade" model and the "pytorch_model"
+lf = "logit" #there are the options "logit" and "bce_only"
+
 dtype = torch.float32
-#transformer_model = transformer_model(32)
-transformer_model_extended = transformer_model_extended(32)
-n_epochs = 30
-total_samples = len(dataset)
-n_iterations = math.ceil(total_samples/64)
-print (total_samples,n_iterations)
-#loss_fn = nn.BCELoss()
-loss_fn = nn.BCEWithLogitsLoss()
-#optimizer = optim.SGD(transformer_model.parameters(), lr=3e-4)
-#transformer_model.train()
-optimizer = optim.SGD(transformer_model_extended.parameters(), lr=5e-5)
-transformer_model_extended.train()
+feature_nr = 32
+loss_rate = 2e-4
+
+if (model == "homemade"):
+	transformer_model = transformer_model(feature_nr)
+if (model == "pytorch_model"):
+	transformer_model = transformer_model_extended(feature_nr)
+if (lf == "logit"):
+	loss_fn = nn.BCEWithLogitsLoss()
+if (lf == "bce_only"):
+	loss_fn = nn.BCELoss()
+optimizer = optim.SGD(transformer_model.parameters(),lr=loss_rate)
+transformer_model.train()
 l_loss = []
+
 for epoch in range(n_epochs):
 	#for X_batch,target,in_hitnr in dloader:
 	for i,(X_batch,target,in_hitnr) in enumerate(dloader):
 		if (i+1) % 100 == 0:
 			print(f"epoch {epoch+1}/{n_epochs}, step {i+1}/{n_iterations}")
-		#y_pred = transformer_model(X_batch,in_hitnr)
-		y_pred = transformer_model_extended(X_batch,in_hitnr)
-		#y_true = target[:in_hitnr,:in_hitnr]
-		y_true = target
+		
+		if (model == "homemade"):
+			y_pred = transformer_model(X_batch,in_hitnr)
+			y_true = target[:in_hitnr,:in_hitnr]
+		if (model == "pytorch_model"):
+			y_pred = transformer_model(X_batch,in_hitnr)
+			y_true = target
 		upper_tri_mask = torch.triu(torch.ones(((torch.max(in_hitnr)).type(torch.int64),(torch.max(in_hitnr).type(torch.int64)))),diagonal=1).bool()
 		y_true = y_true[:,upper_tri_mask]
 		loss  = loss_fn(y_pred,y_true)
