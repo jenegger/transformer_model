@@ -56,30 +56,30 @@ def dynamic_length_collate(batch):
 
 
 dataset = CustomDataset()
-dloader = DataLoader(dataset,batch_size=1,shuffle=False,collate_fn=dynamic_length_collate)
+dloader = DataLoader(dataset,batch_size=64,shuffle=False,collate_fn=dynamic_length_collate)
 
 # Train the model
 dtype = torch.float32
-transformer_model = transformer_model(32)
-#transformer_model_extended = transformer_model_extended(32)
-n_epochs = 50
+#transformer_model = transformer_model(32)
+transformer_model_extended = transformer_model_extended(32)
+n_epochs = 30
 total_samples = len(dataset)
-n_iterations = math.ceil(total_samples/16)
+n_iterations = math.ceil(total_samples/64)
 print (total_samples,n_iterations)
-loss_fn = nn.BCELoss()
-#loss_fn = nn.BCEWithLogitsLoss()
-optimizer = optim.SGD(transformer_model.parameters(), lr=3e-4)
-transformer_model.train()
-#optimizer = optim.SGD(transformer_model_extended.parameters(), lr=3e-4)
-#transformer_model_extended.train()
+#loss_fn = nn.BCELoss()
+loss_fn = nn.BCEWithLogitsLoss()
+#optimizer = optim.SGD(transformer_model.parameters(), lr=3e-4)
+#transformer_model.train()
+optimizer = optim.SGD(transformer_model_extended.parameters(), lr=5e-5)
+transformer_model_extended.train()
 l_loss = []
 for epoch in range(n_epochs):
 	#for X_batch,target,in_hitnr in dloader:
 	for i,(X_batch,target,in_hitnr) in enumerate(dloader):
 		if (i+1) % 100 == 0:
 			print(f"epoch {epoch+1}/{n_epochs}, step {i+1}/{n_iterations}")
-		y_pred = transformer_model(X_batch,in_hitnr)
-		#y_pred = transformer_model_extended(X_batch,in_hitnr)
+		#y_pred = transformer_model(X_batch,in_hitnr)
+		y_pred = transformer_model_extended(X_batch,in_hitnr)
 		#y_true = target[:in_hitnr,:in_hitnr]
 		y_true = target
 		upper_tri_mask = torch.triu(torch.ones(((torch.max(in_hitnr)).type(torch.int64),(torch.max(in_hitnr).type(torch.int64)))),diagonal=1).bool()
