@@ -1,5 +1,7 @@
 import torch
+import sys
 import math
+import statistics
 import numpy as np
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
@@ -9,6 +11,7 @@ from data_shaping import create_data
 from transform_model import transformer_model
 from transform_model import transformer_model_extended
 from matplotlib import pyplot as plt
+from r3bmodel import r3bmodel
 
 
 class CustomDataset(Dataset):
@@ -54,7 +57,7 @@ def dynamic_length_collate(batch):
 		
 
 
-bs = 64
+bs = 16
 dataset = CustomDataset()
 dloader = DataLoader(dataset,batch_size=bs,shuffle=False,collate_fn=dynamic_length_collate)
 #epoch-iteration infos ----
@@ -65,8 +68,8 @@ print (total_samples,n_iterations)
 #--------------------------
 
 # Train the model
-model = "pytorch_model"  #there are the "homemade" model and the "pytorch_model"
-lf = "logit" #there are the options "logit" and "bce_only"
+model = "r3bmodel"  #there are the "homemade" model and the "pytorch_model"
+lf = "bce_only" #there are the options "logit" and "bce_only"
 
 dtype = torch.float32
 feature_nr = 32
@@ -80,8 +83,9 @@ if (lf == "logit"):
 	loss_fn = nn.BCEWithLogitsLoss()
 if (lf == "bce_only"):
 	loss_fn = nn.BCELoss()
-optimizer = optim.SGD(transformer_model.parameters(),lr=loss_rate)
-transformer_model.train()
+if (model == "homemade" or model == "pytorch_model"):
+	optimizer = optim.SGD(transformer_model.parameters(),lr=loss_rate)
+	transformer_model.train()
 l_loss = []
 
 for epoch in range(n_epochs):
@@ -95,19 +99,28 @@ for epoch in range(n_epochs):
 			y_true = target[:in_hitnr,:in_hitnr]
 		if (model == "pytorch_model"):
 			y_pred = transformer_model(X_batch,in_hitnr)
+			torch.set_printoptions(threshold=10000)
+			#print ("this is y predicted:")
+			#print(y_pred)
 			y_true = target
+		if (model == "r3bmodel"):
+			y_pred = r3bmodel(X_batch,0.25).float()
+			y_true = target.float()
 		upper_tri_mask = torch.triu(torch.ones(((torch.max(in_hitnr)).type(torch.int64),(torch.max(in_hitnr).type(torch.int64)))),diagonal=1).bool()
 		y_true = y_true[:,upper_tri_mask]
 		loss  = loss_fn(y_pred,y_true)
-		optimizer.zero_grad()
-		loss.backward()
-		optimizer.step()
+		if (model == "homemade" or model == "pytorch_model"):
+			optimizer.zero_grad()
+			loss.backward()
+			optimizer.step()
 		l_loss.append(loss.item())
+
+mean_loss = statistics.mean(l_loss[1500:])
+print("this is mean losss over all epochs and steps:\t",mean_loss)
 
 plt.title("Loss functions")
 plt.xlabel("Iterations")
 plt.ylabel("Loss")
 plt.plot(l_loss)
-plt.show()
-
-		
+#plt.show()
+plt.savefig("loss_func_r3bmodel_bs16_bce.png",dpi=300)

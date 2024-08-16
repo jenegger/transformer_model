@@ -11,7 +11,7 @@ def create_data():
 	my_data = genfromtxt('data_stream_2121.txt', delimiter=',')
 	#normalize data
 	my_data[:,4] =(my_data[:,4]-np.min(my_data[:,4]))/(np.max(my_data[:,4])-np.min(my_data[:,4]))
-	my_data[:,1] =(my_data[:,1]-np.min(my_data[:,1]))/(np.max(my_data[:,1])-np.min(my_data[:,1]))
+	#my_data[:,1] =(my_data[:,1]-np.min(my_data[:,1]))/(np.max(my_data[:,1])-np.min(my_data[:,1]))
 	array_unique_events = np.unique(my_data[:,0])
 	size_of_unique_events = array_unique_events.shape[0];
 	modulo_val = size_of_unique_events % 3
