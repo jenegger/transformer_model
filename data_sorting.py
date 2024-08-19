@@ -68,7 +68,7 @@ print (total_samples,n_iterations)
 #--------------------------
 
 # Train the model
-model = "r3bmodel"  #there are the "homemade" model and the "pytorch_model"
+model = "pytorch_model"  #there are the "homemade" model and the "pytorch_model"
 lf = "bce_only" #there are the options "logit" and "bce_only"
 
 dtype = torch.float32
@@ -100,8 +100,8 @@ for epoch in range(n_epochs):
 		if (model == "pytorch_model"):
 			y_pred = transformer_model(X_batch,in_hitnr)
 			torch.set_printoptions(threshold=10000)
-			#print ("this is y predicted:")
-			#print(y_pred)
+			print ("this is y predicted:")
+			print(y_pred)
 			y_true = target
 		if (model == "r3bmodel"):
 			y_pred = r3bmodel(X_batch,0.25).float()
