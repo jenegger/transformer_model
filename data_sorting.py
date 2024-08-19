@@ -63,7 +63,7 @@ bs = 64
 dataset = CustomDataset()
 dloader = DataLoader(dataset,batch_size=bs,shuffle=False,collate_fn=dynamic_length_collate)
 #epoch-iteration infos ----
-n_epochs = 1
+n_epochs = 10
 total_samples = len(dataset)
 n_iterations = math.ceil(total_samples/bs)
 print (total_samples,n_iterations)
@@ -145,13 +145,12 @@ import itertools
 if (model == "homemade" or model == "pytorch_model"):
 	transformer_model.eval()
 for cut in range(500,975,25):
+#for cut in range(500,501):
 	cut = cut/1000.
 	reco_list = []
 	true_list = []
 	for i,(X_batch,target,in_hitnr) in enumerate(dloader):
-		if (i+1) % 100 == 0:
-			print(f"epoch {epoch+1}/{n_epochs}, step {i+1}/{n_iterations}")
-		
+
 		if (model == "homemade"):
 			y_pred = transformer_model(X_batch,in_hitnr)
 			y_true = target[:in_hitnr,:in_hitnr]
@@ -164,18 +163,22 @@ for cut in range(500,975,25):
 			y_true = target.float()
 		upper_tri_mask = torch.triu(torch.ones(((torch.max(in_hitnr)).type(torch.int64),(torch.max(in_hitnr).type(torch.int64)))),diagonal=1).bool()
 		y_true = y_true[:,upper_tri_mask]
-		for l in range(bs):	
-			print("size of data and l :\t",l, (X_batch[l,:,:]).shape)
+		for l in range(X_batch.shape[0]):	
 			data_test = X_batch[l,:,:]
 			comb_test = y_pred[l,:]
 			idea_test = energy_clusters(comb_test,data_test,cut)
 			true_test = energy_clusters(y_true[l,:],data_test,cut)
 			reco_list.append(idea_test)
+			true_list.append(true_test)
 	merged = list(itertools.chain.from_iterable(reco_list))
 	merged_true = list(itertools.chain.from_iterable(true_list))
 	plt.hist(merged,bins=100,range=(0,8),label=model,color="green",alpha=0.5)
 	plt.hist(merged_true,bins=100,range=(0,8),label="true",color="black",alpha=0.5)
 	plt.legend()
+	titlename = "cutting edge at" + str(cut)
+	plt.title(titlename)
+	plt.yscale('log')
 	plot_name = str(model)+str("_")+str(cut)+str(".png")
 	plt.savefig(plot_name,dpi=300)
+	plt.clf()
 	#plt.show()
