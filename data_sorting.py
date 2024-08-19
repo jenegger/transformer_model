@@ -1,4 +1,5 @@
 import torch
+import networkx as nx
 import sys
 import math
 import statistics
@@ -12,6 +13,7 @@ from transform_model import transformer_model
 from transform_model import transformer_model_extended
 from matplotlib import pyplot as plt
 from r3bmodel import r3bmodel
+from idea import energy_clusters
 
 
 class CustomDataset(Dataset):
@@ -57,11 +59,11 @@ def dynamic_length_collate(batch):
 		
 
 
-bs = 16
+bs = 64
 dataset = CustomDataset()
 dloader = DataLoader(dataset,batch_size=bs,shuffle=False,collate_fn=dynamic_length_collate)
 #epoch-iteration infos ----
-n_epochs = 10
+n_epochs = 1
 total_samples = len(dataset)
 n_iterations = math.ceil(total_samples/bs)
 print (total_samples,n_iterations)
@@ -87,7 +89,6 @@ if (model == "homemade" or model == "pytorch_model"):
 	optimizer = optim.SGD(transformer_model.parameters(),lr=loss_rate)
 	transformer_model.train()
 l_loss = []
-
 for epoch in range(n_epochs):
 	#for X_batch,target,in_hitnr in dloader:
 	for i,(X_batch,target,in_hitnr) in enumerate(dloader):
@@ -100,14 +101,23 @@ for epoch in range(n_epochs):
 		if (model == "pytorch_model"):
 			y_pred = transformer_model(X_batch,in_hitnr)
 			torch.set_printoptions(threshold=10000)
-			print ("this is y predicted:")
-			print(y_pred)
 			y_true = target
 		if (model == "r3bmodel"):
 			y_pred = r3bmodel(X_batch,0.25).float()
 			y_true = target.float()
 		upper_tri_mask = torch.triu(torch.ones(((torch.max(in_hitnr)).type(torch.int64),(torch.max(in_hitnr).type(torch.int64)))),diagonal=1).bool()
 		y_true = y_true[:,upper_tri_mask]
+		##insert checks for energy spectum
+		#print ("this is y predicted:")
+		#print(y_pred.shape)
+		#print("thsi is X_batch shape:\t",X_batch.shape)
+		#data_test = X_batch[0,:,:]
+		#comb_test = y_pred[0,:]
+		#idea_test = energy_clusters(comb_test,data_test)
+		#print(idea_test)
+		#reco_list.append(idea_test)
+
+		##end of checks
 		loss  = loss_fn(y_pred,y_true)
 		if (model == "homemade" or model == "pytorch_model"):
 			optimizer.zero_grad()
@@ -115,12 +125,57 @@ for epoch in range(n_epochs):
 			optimizer.step()
 		l_loss.append(loss.item())
 
-mean_loss = statistics.mean(l_loss[1500:])
-print("this is mean losss over all epochs and steps:\t",mean_loss)
+#mean_loss = statistics.mean(l_loss[1500:])
+#print("this is mean losss over all epochs and steps:\t",mean_loss)
 
-plt.title("Loss functions")
-plt.xlabel("Iterations")
-plt.ylabel("Loss")
-plt.plot(l_loss)
+#plt.title("Loss functions")
+#plt.xlabel("Iterations")
+#plt.ylabel("Loss")
+#plt.plot(l_loss)
+##plt.show()
+#plt.savefig("loss_func_r3bmodel_bs16_bce.png",dpi=300)
+
+
+###new part
+import itertools
+#merged = list(itertools.chain.from_iterable(reco_list))
+#plt.hist(merged,bins=100)
 #plt.show()
-plt.savefig("loss_func_r3bmodel_bs16_bce.png",dpi=300)
+#here I evaluate the model
+if (model == "homemade" or model == "pytorch_model"):
+	transformer_model.eval()
+for cut in range(500,975,25):
+	cut = cut/1000.
+	reco_list = []
+	true_list = []
+	for i,(X_batch,target,in_hitnr) in enumerate(dloader):
+		if (i+1) % 100 == 0:
+			print(f"epoch {epoch+1}/{n_epochs}, step {i+1}/{n_iterations}")
+		
+		if (model == "homemade"):
+			y_pred = transformer_model(X_batch,in_hitnr)
+			y_true = target[:in_hitnr,:in_hitnr]
+		if (model == "pytorch_model"):
+			y_pred = transformer_model(X_batch,in_hitnr)
+			torch.set_printoptions(threshold=10000)
+			y_true = target
+		if (model == "r3bmodel"):
+			y_pred = r3bmodel(X_batch,0.25).float()
+			y_true = target.float()
+		upper_tri_mask = torch.triu(torch.ones(((torch.max(in_hitnr)).type(torch.int64),(torch.max(in_hitnr).type(torch.int64)))),diagonal=1).bool()
+		y_true = y_true[:,upper_tri_mask]
+		for l in range(bs):	
+			print("size of data and l :\t",l, (X_batch[l,:,:]).shape)
+			data_test = X_batch[l,:,:]
+			comb_test = y_pred[l,:]
+			idea_test = energy_clusters(comb_test,data_test,cut)
+			true_test = energy_clusters(y_true[l,:],data_test,cut)
+			reco_list.append(idea_test)
+	merged = list(itertools.chain.from_iterable(reco_list))
+	merged_true = list(itertools.chain.from_iterable(true_list))
+	plt.hist(merged,bins=100,range=(0,8),label=model,color="green",alpha=0.5)
+	plt.hist(merged_true,bins=100,range=(0,8),label="true",color="black",alpha=0.5)
+	plt.legend()
+	plot_name = str(model)+str("_")+str(cut)+str(".png")
+	plt.savefig(plot_name,dpi=300)
+	#plt.show()
