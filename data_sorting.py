@@ -63,7 +63,7 @@ bs = 64
 dataset = CustomDataset()
 dloader = DataLoader(dataset,batch_size=bs,shuffle=False,collate_fn=dynamic_length_collate)
 #epoch-iteration infos ----
-n_epochs = 10
+n_epochs = 1
 total_samples = len(dataset)
 n_iterations = math.ceil(total_samples/bs)
 print (total_samples,n_iterations)
@@ -144,7 +144,7 @@ import itertools
 #here I evaluate the model
 if (model == "homemade" or model == "pytorch_model"):
 	transformer_model.eval()
-for cut in range(500,975,25):
+for cut in range(500,1000,25):
 #for cut in range(500,501):
 	cut = cut/1000.
 	reco_list = []
