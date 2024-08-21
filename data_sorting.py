@@ -63,7 +63,7 @@ bs = 64
 dataset = CustomDataset()
 dloader = DataLoader(dataset,batch_size=bs,shuffle=False,collate_fn=dynamic_length_collate)
 #epoch-iteration infos ----
-n_epochs = 1
+n_epochs = 10
 total_samples = len(dataset)
 n_iterations = math.ceil(total_samples/bs)
 print (total_samples,n_iterations)
@@ -124,6 +124,8 @@ for epoch in range(n_epochs):
 			loss.backward()
 			optimizer.step()
 		l_loss.append(loss.item())
+		if (model == "homemade" or model == "pytorch_model"):
+			torch.save(transformer_model,'model_scripted.pt') # Save
 
 #mean_loss = statistics.mean(l_loss[1500:])
 #print("this is mean losss over all epochs and steps:\t",mean_loss)
@@ -143,6 +145,7 @@ import itertools
 #plt.show()
 #here I evaluate the model
 if (model == "homemade" or model == "pytorch_model"):
+	transformer_model = torch.load('model_scripted.pt')
 	transformer_model.eval()
 for cut in range(500,1000,25):
 #for cut in range(500,501):
@@ -178,7 +181,7 @@ for cut in range(500,1000,25):
 	titlename = "cutting edge at" + str(cut)
 	plt.title(titlename)
 	plt.yscale('log')
-	plot_name = str(model)+str("_")+str(cut)+str(".png")
+	plot_name = str(model)+str("_")+ str(n_epochs) + str("_") +str(cut)+str(".png")
 	plt.savefig(plot_name,dpi=300)
 	plt.clf()
 	#plt.show()
