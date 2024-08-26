@@ -72,11 +72,12 @@ class transformer_model_extended(nn.Module):
 		#return L2_dist[:,upper_tri_mask]
 		ret_val = L2_dist[:,upper_tri_mask]
 		#out_ret_val = torch.where(ret_val > 0.7, torch.tensor(1), torch.tensor(0)).float()
-		#out_ret_val = torch.where(ret_val > 0.7, torch.tensor(1,requires_grad=True), torch.tensor(0,requires_grad=True)).float()
-		#out_ret_val = (ret_val > 0.7).float()
-		out_ret_val = torch.where(ret_val > 0.7, torch.FloatTensor(1,requires_grad=True), torch.FloatTensor(0,requires_grad=True))
-		print(type(out_ret_val))
-		print(out_ret_val.shape)
+		#out_ret_val = torch.where(ret_val > 0.7, torch.tensor(1,requires_grad=False), torch.tensor(0,requires_grad=False)).float()
+		out_ret_val = (ret_val > 0.8).float()
+		out_ret_val = torch.tensor(out_ret_val, requires_grad=True)
+		#out_ret_val = torch.where(ret_val > 0.7, torch.FloatTensor(1,requires_grad=True), torch.FloatTensor(0,requires_grad=True))
+		#print(type(out_ret_val))
+		#print(out_ret_val.shape)
 		return out_ret_val
 
 
