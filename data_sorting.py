@@ -85,6 +85,7 @@ if (lf == "logit"):
 	loss_fn = nn.BCEWithLogitsLoss()
 if (lf == "bce_only"):
 	loss_fn = nn.BCELoss()
+	
 if (model == "homemade" or model == "pytorch_model"):
 	optimizer = optim.SGD(transformer_model.parameters(),lr=loss_rate)
 	transformer_model.train()
@@ -107,6 +108,11 @@ for epoch in range(n_epochs):
 			y_true = target.float()
 		upper_tri_mask = torch.triu(torch.ones(((torch.max(in_hitnr)).type(torch.int64),(torch.max(in_hitnr).type(torch.int64)))),diagonal=1).bool()
 		y_true = y_true[:,upper_tri_mask]
+		if (epoch == 9):
+			print("true values:")
+			print(y_true[1,:])
+			print("pred_values:")
+			print(y_pred[1,:])
 		##insert checks for energy spectum
 		#print ("this is y predicted:")
 		#print(y_pred.shape)
@@ -130,58 +136,58 @@ for epoch in range(n_epochs):
 #mean_loss = statistics.mean(l_loss[1500:])
 #print("this is mean losss over all epochs and steps:\t",mean_loss)
 
-#plt.title("Loss functions")
-#plt.xlabel("Iterations")
-#plt.ylabel("Loss")
-#plt.plot(l_loss)
-##plt.show()
+plt.title("Loss functions")
+plt.xlabel("Iterations")
+plt.ylabel("Loss")
+plt.plot(l_loss)
+plt.show()
 #plt.savefig("loss_func_r3bmodel_bs16_bce.png",dpi=300)
 
 
-###new part
-import itertools
-#merged = list(itertools.chain.from_iterable(reco_list))
-#plt.hist(merged,bins=100)
-#plt.show()
-#here I evaluate the model
-if (model == "homemade" or model == "pytorch_model"):
-	transformer_model = torch.load('model_scripted.pt')
-	transformer_model.eval()
-for cut in range(500,1000,25):
-#for cut in range(500,501):
-	cut = cut/1000.
-	reco_list = []
-	true_list = []
-	for i,(X_batch,target,in_hitnr) in enumerate(dloader):
-
-		if (model == "homemade"):
-			y_pred = transformer_model(X_batch,in_hitnr)
-			y_true = target[:in_hitnr,:in_hitnr]
-		if (model == "pytorch_model"):
-			y_pred = transformer_model(X_batch,in_hitnr)
-			torch.set_printoptions(threshold=10000)
-			y_true = target
-		if (model == "r3bmodel"):
-			y_pred = r3bmodel(X_batch,0.25).float()
-			y_true = target.float()
-		upper_tri_mask = torch.triu(torch.ones(((torch.max(in_hitnr)).type(torch.int64),(torch.max(in_hitnr).type(torch.int64)))),diagonal=1).bool()
-		y_true = y_true[:,upper_tri_mask]
-		for l in range(X_batch.shape[0]):	
-			data_test = X_batch[l,:,:]
-			comb_test = y_pred[l,:]
-			idea_test = energy_clusters(comb_test,data_test,cut)
-			true_test = energy_clusters(y_true[l,:],data_test,cut)
-			reco_list.append(idea_test)
-			true_list.append(true_test)
-	merged = list(itertools.chain.from_iterable(reco_list))
-	merged_true = list(itertools.chain.from_iterable(true_list))
-	plt.hist(merged,bins=100,range=(0,8),label=model,color="green",alpha=0.5)
-	plt.hist(merged_true,bins=100,range=(0,8),label="true",color="black",alpha=0.5)
-	plt.legend()
-	titlename = "cutting edge at" + str(cut)
-	plt.title(titlename)
-	plt.yscale('log')
-	plot_name = str(model)+str("_")+ str(n_epochs) + str("_") +str(cut)+str(".png")
-	plt.savefig(plot_name,dpi=300)
-	plt.clf()
-	#plt.show()
+####new part
+#import itertools
+##merged = list(itertools.chain.from_iterable(reco_list))
+##plt.hist(merged,bins=100)
+##plt.show()
+##here I evaluate the model
+#if (model == "homemade" or model == "pytorch_model"):
+#	transformer_model = torch.load('model_scripted.pt')
+#	transformer_model.eval()
+#for cut in range(500,1000,25):
+##for cut in range(500,501):
+#	cut = cut/1000.
+#	reco_list = []
+#	true_list = []
+#	for i,(X_batch,target,in_hitnr) in enumerate(dloader):
+#
+#		if (model == "homemade"):
+#			y_pred = transformer_model(X_batch,in_hitnr)
+#			y_true = target[:in_hitnr,:in_hitnr]
+#		if (model == "pytorch_model"):
+#			y_pred = transformer_model(X_batch,in_hitnr)
+#			torch.set_printoptions(threshold=10000)
+#			y_true = target
+#		if (model == "r3bmodel"):
+#			y_pred = r3bmodel(X_batch,0.25).float()
+#			y_true = target.float()
+#		upper_tri_mask = torch.triu(torch.ones(((torch.max(in_hitnr)).type(torch.int64),(torch.max(in_hitnr).type(torch.int64)))),diagonal=1).bool()
+#		y_true = y_true[:,upper_tri_mask]
+#		for l in range(X_batch.shape[0]):	
+#			data_test = X_batch[l,:,:]
+#			comb_test = y_pred[l,:]
+#			idea_test = energy_clusters(comb_test,data_test,cut)
+#			true_test = energy_clusters(y_true[l,:],data_test,cut)
+#			reco_list.append(idea_test)
+#			true_list.append(true_test)
+#	merged = list(itertools.chain.from_iterable(reco_list))
+#	merged_true = list(itertools.chain.from_iterable(true_list))
+#	plt.hist(merged,bins=100,range=(0,8),label=model,color="green",alpha=0.5)
+#	plt.hist(merged_true,bins=100,range=(0,8),label="true",color="black",alpha=0.5)
+#	plt.legend()
+#	titlename = "cutting edge at" + str(cut)
+#	plt.title(titlename)
+#	plt.yscale('log')
+#	plot_name = str(model)+str("_")+ str(n_epochs) + str("_") +str(cut)+str(".png")
+#	plt.savefig(plot_name,dpi=300)
+#	plt.clf()
+#	#plt.show()

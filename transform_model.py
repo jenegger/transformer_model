@@ -69,7 +69,13 @@ class transformer_model_extended(nn.Module):
 		L2_dist = torch.cosine_similarity(out[:,None] , out[:,:,None],dim=-1)		
 		L2_dist = 0.5*(L2_dist+1)
 		upper_tri_mask = torch.triu(torch.ones((out.shape[1],out.shape[1])),diagonal=1).bool() #out[1] is max hit number in batch 
-		return L2_dist[:,upper_tri_mask]
+		#return L2_dist[:,upper_tri_mask]
+		ret_val = L2_dist[:,upper_tri_mask]
+		#out_ret_val = torch.where(ret_val > 0.7, torch.tensor(1), torch.tensor(0)).float()
+		out_ret_val = torch.where(ret_val > 0.7, torch.tensor(1,requires_grad=True), torch.tensor(0,requires_grad=True)).float()
+		print(type(out_ret_val))
+		print(out_ret_val.shape)
+		return out_ret_val
 
 
 
