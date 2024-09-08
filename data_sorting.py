@@ -95,7 +95,6 @@ for epoch in range(n_epochs):
 	for i,(X_batch,target,in_hitnr) in enumerate(dloader):
 		if (i+1) % 100 == 0:
 			print(f"epoch {epoch+1}/{n_epochs}, step {i+1}/{n_iterations}")
-		
 		if (model == "homemade"):
 			y_pred = transformer_model(X_batch,in_hitnr)
 			y_true = target[:in_hitnr,:in_hitnr]
