@@ -75,7 +75,8 @@ lf = "bce_only" #there are the options "logit" and "bce_only"
 
 dtype = torch.float32
 feature_nr = 32
-loss_rate = 2e-4
+#loss_rate = 2e-4
+loss_rate = 8e-4
 
 if (model == "homemade"):
 	transformer_model = transformer_model(feature_nr)
