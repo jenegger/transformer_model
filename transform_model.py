@@ -41,6 +41,7 @@ class transformer_model(nn.Module):
 		L2_dist = torch.cosine_similarity(out[:,None] , out[:,:,None],dim=-1)		
 		L2_dist = 0.5*(L2_dist+1)
 		upper_tri_mask = torch.triu(torch.ones((out.shape[1],out.shape[1])),diagonal=1).bool() #out[1] is max hit number in batch 
+
 		return L2_dist[:,upper_tri_mask]
 
 
@@ -53,6 +54,7 @@ class transformer_model_extended(nn.Module):
 		self.linear_embedding = torch.nn.Linear(4,self.features)
 		self.encoder_layer = nn.TransformerEncoderLayer(d_model=self.features, nhead=self.heads)
 		self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=6)
+		#self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=8)
 		self.activation = torch.nn.ReLU()
 		self.additional_linear_layer = torch.nn.Linear(self.features,self.features)
 		
@@ -77,9 +79,29 @@ class transformer_model_extended(nn.Module):
 		#out_ret_val = (ret_val > 0.8).float()
 		#out_ret_val = torch.tensor(out_ret_val, requires_grad=True)
 		#out_ret_val = torch.where(ret_val > 0.7, torch.FloatTensor(1,requires_grad=True), torch.FloatTensor(0,requires_grad=True))
-		#print(type(out_ret_val))
-		#print(out_ret_val.shape)
-		return ret_val
+
+
+		tensor_i = out.unsqueeze(2)  # shape: (64, 10, 1, 32)
+		tensor_j = out.unsqueeze(1)  # shape: (64, 1, 10, 32)
+		expansion_factor = out.shape[1]
+		output_tensor = torch.cat([tensor_i.expand(-1, -1, expansion_factor, -1), tensor_j.expand(-1, expansion_factor, -1, -1)], dim=-1)
+		#small net:
+		net = nn.Sequential(
+      			nn.Linear(64,8),
+			nn.ReLU(),
+			nn.Linear(8,1),
+			nn.Sigmoid()
+			)
+		res = net(output_tensor)
+		temp_res = torch.squeeze(res)
+		upper_tri_mask = torch.triu(torch.ones((temp_res.shape[1],temp_res.shape[1])),diagonal=1).bool() #out[1] is max hit number in batch 
+		result = temp_res[:,upper_tri_mask]
+
+		
+
+
+		return result
+		#return ret_val #--> as I have done before....
 
 
 
